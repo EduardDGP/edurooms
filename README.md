@@ -228,6 +228,6 @@ edurooms/
 ---
 
 ## 📄 Licencia
-
-Proyecto de uso interno para el IES Meléndez Valdés.  
-Desarrollado con fines educativos y de gestión interna del centro.
+ 
+Proyecto de uso interno para centros educativos.
+Desarrollado con fines educativos y de gestión interna.
