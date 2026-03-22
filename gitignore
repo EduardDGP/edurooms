@@ -1,0 +1,26 @@
+# Dependencias
+node_modules/
+
+# Base de datos (se regenera sola)
+backend/src/config/edurooms.db
+backend/src/config/edurooms.db-wal
+backend/src/config/edurooms.db-shm
+
+# Fotos de perfil subidas
+backend/uploads/
+
+# Variables de entorno
+.env
+.env.local
+.env.production
+
+# Build del frontend
+frontend/dist/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
