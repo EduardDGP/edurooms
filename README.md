@@ -1,7 +1,6 @@
 # 🏫 EduRooms
 
 **Plataforma de gestión interna para centros educativos**  
-Desarrollada para el **IES Meléndez Valdés** — Villafranca de los Barros (Badajoz)
 
 ---
 
