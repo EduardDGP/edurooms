@@ -45,9 +45,23 @@ El acceso está restringido al profesorado del centro. Cada cuenta nueva requier
 
 ### 👥 Gestión de Alumnos
 - Importación de listados desde Excel de Rayuela (Junta de Extremadura)
-- Detección automática de cursos y grupos del archivo
+- Detección automática de cursos y grupos del archivo — sin configuración manual
 - Organización por curso (1º ESO, 2º ESO, etc.) y grupo (A, B, C...)
 - Visualización de la lista completa de cada grupo
+- Compatible con cualquier número de grupos por curso
+
+**Lectura de archivos Excel:**
+
+La app lee directamente los archivos `.xls` exportados desde la plataforma **Rayuela** de la Junta de Extremadura usando la librería **[xlsx (SheetJS)](https://www.npmjs.com/package/xlsx)**.
+
+El formato del archivo es el estándar de Rayuela:
+
+| Alumnado | Grupo |
+|----------|-------|
+| Apellidos, Nombre | 1º ESO C |
+| Apellidos, Nombre | 1º ESO A |
+
+El parser lee cada fila, extrae apellidos y nombre (separados por coma) y detecta el grupo desde la letra final del campo Grupo (`1º ESO C` → grupo `C`). Funciona con cualquier número de grupos y cursos sin modificar el código.
 
 ### 💬 Social
 - Lista de contactos entre profesores
@@ -78,6 +92,7 @@ El acceso está restringido al profesorado del centro. Cada cuenta nueva requier
 | Tecnología | Uso |
 |------------|-----|
 | React 18 | Interfaz de usuario |
+| xlsx (SheetJS) | Lectura de archivos Excel de Rayuela |
 | React Router DOM | Navegación entre páginas |
 | Vite | Bundler y servidor de desarrollo |
 | CSS Variables | Sistema de diseño personalizado |
@@ -141,7 +156,7 @@ La aplicación estará disponible en **http://localhost:5173**
 
 ---
 
-## 🔑 Acceso de pruebas de ADMIN
+## 🔑 Acceso de pruebas
 
 Al arrancar el backend por primera vez se crea automáticamente la cuenta del director:
 
