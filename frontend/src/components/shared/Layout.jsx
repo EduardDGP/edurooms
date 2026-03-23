@@ -56,7 +56,7 @@ export default function Layout({ toast }) {
         {/* Logo */}
         <div style={{ padding:'28px 20px 24px', borderBottom:'1px solid rgba(255,255,255,.06)' }}>
           <NavLink to="/aulas" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:10 }}>
-            <img src="/logo.png" alt="Logo" style={{ width:32, height:32, objectFit:'contain', flexShrink:0 }} />
+            <img src="/logo.png" alt="Logo" style={{ width:32, height:32, objectFit:'contain', flexShrink:0, background:'#fff', borderRadius:6, padding:2 }} />
             <span style={{ fontSize:17, fontWeight:800, color:'#fff', letterSpacing:'-0.5px', fontFamily:'Outfit,sans-serif' }}>
               Edu<span style={{ color:'var(--accent)' }}>Rooms</span>
             </span>
