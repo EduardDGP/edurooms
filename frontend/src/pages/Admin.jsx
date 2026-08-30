@@ -213,11 +213,11 @@ export default function Admin({ toast }) {
       </div>
 
       {/* Stats — 2x2 en móvil, 4 en desktop */}
-      <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4,1fr)', gap:12, marginBottom:20 }}>
+      <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(180px, 1fr))', gap:12, marginBottom:20 }}>
         {stats.map(s => (
           <div key={s.label} onClick={() => setTab(s.key)}
             className="card"
-            style={{ display:'flex', alignItems:'center', gap:12, padding: isMobile ? 14 : 18, cursor:'pointer', border: tab===s.key ? `1.5px solid ${s.color}` : undefined }}>
+            style={{ display:'flex', alignItems:'center', gap:12, padding: isMobile ? 14 : 18, cursor:'pointer', minWidth:0, border: tab===s.key ? `1.5px solid ${s.color}` : undefined }}>
             <div style={{ width:40, height:40, borderRadius:10, background:s.pale, color:s.color, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{s.icon}</div>
             <div style={{ minWidth:0 }}>
               <div style={{ fontSize: isMobile ? 22 : 26, fontWeight:800, color:s.color, lineHeight:1 }}>{s.value}</div>

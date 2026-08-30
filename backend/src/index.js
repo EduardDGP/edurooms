@@ -20,6 +20,15 @@ const franjasRoutes       = require('./routes/franjas')
 const app  = express()
 const PORT = 3001
 
+// Un error no controlado en una ruta async (p. ej. un fallo de SQL) no debe
+// tumbar el servidor entero para todos los centros: lo registramos y seguimos.
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled rejection:', err)
+})
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err)
+})
+
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }))
 
 // Webhook de Stripe ANTES del middleware JSON (necesita body raw)
@@ -46,6 +55,15 @@ app.use('/api/franjas',        franjasRoutes)
 app.use('/api/stripe',         stripeRoutes)
 
 app.get('/api/health', (req, res) => res.json({ ok: true }))
+
+// Red de seguridad: cualquier error no manejado por una ruta (síncrona o
+// async, vía next(err)) responde con JSON en vez de tumbar la petición o
+// dejar el servidor en un estado raro.
+app.use((err, req, res, next) => {
+  console.error('Error en', req.method, req.path, ':', err)
+  if (res.headersSent) return next(err)
+  res.status(500).json({ error: 'Error interno del servidor' })
+})
 
 initDB()
 app.listen(PORT, () => {

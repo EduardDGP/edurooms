@@ -12,9 +12,22 @@ function headers(extra = {}) {
 async function req(method, url, body) {
   const opts = { method, headers: headers() }
   if (body) opts.body = JSON.stringify(body)
-  const res  = await fetch(BASE + url, opts)
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Error desconocido')
+
+  let res
+  try {
+    res = await fetch(BASE + url, opts)
+  } catch {
+    throw new Error('No se pudo conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.')
+  }
+
+  let data = null
+  try {
+    data = await res.json()
+  } catch {
+    // Respuesta vacía o no-JSON (p. ej. error 500 sin cuerpo)
+  }
+
+  if (!res.ok) throw new Error(data?.error || 'Ha ocurrido un error inesperado. Inténtalo de nuevo.')
   return data
 }
 

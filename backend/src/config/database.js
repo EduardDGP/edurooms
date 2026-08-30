@@ -10,6 +10,26 @@ function getDB() {
   return db
 }
 
+const FRANJAS_DEFECTO = [
+  { orden: 1, label: '1ª hora', inicio: '08:15', fin: '09:10', reservable: 1 },
+  { orden: 2, label: '2ª hora', inicio: '09:10', fin: '10:05', reservable: 1 },
+  { orden: 3, label: '3ª hora', inicio: '10:05', fin: '11:00', reservable: 1 },
+  { orden: 4, label: 'Recreo',  inicio: '11:00', fin: '11:30', reservable: 0 },
+  { orden: 5, label: '4ª hora', inicio: '11:30', fin: '12:25', reservable: 1 },
+  { orden: 6, label: '5ª hora', inicio: '12:25', fin: '13:20', reservable: 1 },
+  { orden: 7, label: '6ª hora', inicio: '13:20', fin: '14:15', reservable: 1 },
+]
+
+function sembrarFranjasPorDefecto(db, centroId) {
+  const insertFranja = db.prepare(`
+    INSERT INTO franjas_centro (centro_id, orden, label, hora_inicio, hora_fin, reservable)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `)
+  for (const f of FRANJAS_DEFECTO) {
+    insertFranja.run(centroId, f.orden, f.label, f.inicio, f.fin, f.reservable)
+  }
+}
+
 function initDB() {
   const db = getDB()
   db.pragma('journal_mode = WAL')
@@ -29,9 +49,39 @@ function initDB() {
       email_verificado     INTEGER NOT NULL DEFAULT 0,
       token_verificacion   TEXT    DEFAULT NULL,
       stripe_customer_id   TEXT    DEFAULT NULL,
+      traspaso_token       TEXT    DEFAULT NULL,
+      traspaso_destino_id  INTEGER REFERENCES profesores(id) ON DELETE SET NULL,
       created_at           TEXT    DEFAULT (datetime('now'))
     )
   `)
+
+  // Migra columnas nuevas en bases de datos ya existentes:
+  // CREATE TABLE IF NOT EXISTS no altera una tabla que ya existe con
+  // un esquema antiguo, así que columnas añadidas después (plan, aprobado,
+  // traspaso_*, etc.) se añaden aquí a mano si faltan.
+  const columnasCentros = new Set(db.prepare('PRAGMA table_info(centros)').all().map(c => c.name))
+  const migracionesCentros = {
+    plan:                "TEXT NOT NULL DEFAULT 'pendiente'",
+    aprobado:            'INTEGER NOT NULL DEFAULT 0',
+    email_verificado:    'INTEGER NOT NULL DEFAULT 0',
+    token_verificacion:  'TEXT DEFAULT NULL',
+    stripe_customer_id:  'TEXT DEFAULT NULL',
+    traspaso_token:      'TEXT DEFAULT NULL',
+    traspaso_destino_id: 'INTEGER REFERENCES profesores(id) ON DELETE SET NULL',
+  }
+  const seAnadioAprobado = !columnasCentros.has('aprobado')
+  const seAnadioPlan     = !columnasCentros.has('plan')
+  for (const [columna, definicion] of Object.entries(migracionesCentros)) {
+    if (!columnasCentros.has(columna)) {
+      db.exec(`ALTER TABLE centros ADD COLUMN ${columna} ${definicion}`)
+      console.log(`✅  Migración: columna centros.${columna} añadida`)
+    }
+  }
+  // Los centros que ya existían antes de introducir la aprobación por
+  // superadmin/Stripe se dan por buenos (si no, quedarían bloqueados
+  // de golpe al añadir la columna con su valor por defecto "pendiente").
+  if (seAnadioAprobado) db.exec(`UPDATE centros SET aprobado = 1`)
+  if (seAnadioPlan)     db.exec(`UPDATE centros SET plan = 'activo' WHERE plan = 'pendiente'`)
 
   // ── Tabla: profesores ─────────────────────────────────
   // rol: 'superadmin' | 'director' | 'jefe_estudios' | 'profesor'
@@ -48,9 +98,25 @@ function initDB() {
       foto        TEXT    DEFAULT NULL,
       rol         TEXT    NOT NULL DEFAULT 'profesor',
       aprobado    INTEGER NOT NULL DEFAULT 0,
+      ultima_actividad    TEXT    DEFAULT NULL,
+      abandono_token      TEXT    DEFAULT NULL,
+      abandono_solicitado INTEGER NOT NULL DEFAULT 0,
       created_at  TEXT    DEFAULT (datetime('now'))
     )
   `)
+
+  const columnasProfesores = new Set(db.prepare('PRAGMA table_info(profesores)').all().map(c => c.name))
+  const migracionesProfesores = {
+    ultima_actividad:    'TEXT DEFAULT NULL',
+    abandono_token:      'TEXT DEFAULT NULL',
+    abandono_solicitado: 'INTEGER NOT NULL DEFAULT 0',
+  }
+  for (const [columna, definicion] of Object.entries(migracionesProfesores)) {
+    if (!columnasProfesores.has(columna)) {
+      db.exec(`ALTER TABLE profesores ADD COLUMN ${columna} ${definicion}`)
+      console.log(`✅  Migración: columna profesores.${columna} añadida`)
+    }
+  }
 
   // ── Tabla: aulas ──────────────────────────────────────
   db.exec(`
@@ -151,6 +217,35 @@ function initDB() {
     )
   `)
 
+  // ── Tabla: franjas_centro ─────────────────────────────
+  // Horario configurable por centro (sustituye a la lista fija que
+  // antes vivía sólo en el frontend, frontend/src/config/franjas.js)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS franjas_centro (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      centro_id    INTEGER NOT NULL REFERENCES centros(id) ON DELETE CASCADE,
+      orden        INTEGER NOT NULL DEFAULT 0,
+      label        TEXT    NOT NULL,
+      hora_inicio  TEXT    NOT NULL,
+      hora_fin     TEXT    NOT NULL,
+      reservable   INTEGER NOT NULL DEFAULT 1,
+      created_at   TEXT    DEFAULT (datetime('now'))
+    )
+  `)
+
+  // Centros sin horario configurado (instalaciones existentes, o creados
+  // antes de que esta tabla existiera) se quedan sin franjas y por tanto
+  // sin poder reservar aulas ni programar guardias. Se les da un horario
+  // por defecto (el mismo que antes era fijo para todos los centros).
+  const centrosSinFranjas = db.prepare(`
+    SELECT id FROM centros
+    WHERE id NOT IN (SELECT DISTINCT centro_id FROM franjas_centro)
+  `).all()
+  if (centrosSinFranjas.length > 0) {
+    for (const centro of centrosSinFranjas) sembrarFranjasPorDefecto(db, centro.id)
+    console.log(`✅  Migración: horario por defecto creado para ${centrosSinFranjas.length} centro(s)`)
+  }
+
   // ── Tabla: password_resets ───────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS password_resets (
@@ -191,4 +286,4 @@ function initDB() {
   console.log('✅  Base de datos lista en', DB_PATH)
 }
 
-module.exports = { getDB, initDB }
+module.exports = { getDB, initDB, sembrarFranjasPorDefecto }

@@ -1,7 +1,7 @@
 const express = require('express')
 const bcrypt  = require('bcryptjs')
 const crypto  = require('crypto')
-const { getDB } = require('../config/database')
+const { getDB, sembrarFranjasPorDefecto } = require('../config/database')
 const { generarToken, verificarToken } = require('../middleware/auth')
 const { enviarEmailVerificacion, enviarEmailResetPassword, enviarEmailNuevoProfesorEnCentro, enviarEmailTraspasoCompletado } = require('../utils/email')
 const router = express.Router()
@@ -100,6 +100,7 @@ router.post('/centro', async (req, res) => {
   ).run(centro_nombre.trim(), centro_codigo.toUpperCase().trim(), centro_ciudad?.trim() || '', centro_provincia?.trim() || '', 'pendiente', 0)
 
   const centroId = centroResult.lastInsertRowid
+  sembrarFranjasPorDefecto(db, centroId)
 
   // Crear cuenta director — aprobada pero bloqueada hasta que el centro sea aprobado
   const hash = bcrypt.hashSync(password, 10)
