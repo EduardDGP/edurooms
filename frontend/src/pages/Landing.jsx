@@ -229,14 +229,23 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer style={{ borderTop:'1px solid rgba(255,255,255,.06)', padding: isMobile ? '28px 20px' : 40, display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:16 }}>
-        <span style={{ fontSize:15, fontWeight:700 }}>Ex<span style={{ color:'#34d399' }}>Rooms</span></span>
-        <p style={{ color:'rgba(255,255,255,.25)', fontSize:13, order: isMobile ? 3 : 0, width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'center' : 'left' }}>© 2026 ExRooms · Gestión interna para centros educativos</p>
-        <div style={{ display:'flex', gap:20 }}>
-          <Link to="/login" style={{ color:'rgba(255,255,255,.35)', textDecoration:'none', fontSize:13 }}>Iniciar sesión</Link>
-          <Link to="/registro" style={{ color:'rgba(255,255,255,.35)', textDecoration:'none', fontSize:13 }}>Registrar centro</Link>
+      <footer style={{ borderTop:'1px solid rgba(255,255,255,.06)', padding: isMobile ? '28px 20px' : '32px 40px', display:'flex', flexDirection:'column', gap:20 }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:16 }}>
+          <span style={{ fontSize:15, fontWeight:700 }}>Ex<span style={{ color:'#34d399' }}>Rooms</span></span>
+          <div style={{ display:'flex', gap:20 }}>
+            <Link to="/login" style={{ color:'rgba(255,255,255,.35)', textDecoration:'none', fontSize:13 }}>Iniciar sesión</Link>
+            <Link to="/registro" style={{ color:'rgba(255,255,255,.35)', textDecoration:'none', fontSize:13 }}>Registrar centro</Link>
+          </div>
+        </div>
+        <div style={{ borderTop:'1px solid rgba(255,255,255,.05)', paddingTop:16, display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
+          <p style={{ color:'rgba(255,255,255,.2)', fontSize:12 }}>© 2026 ExRooms · Gestión interna para centros educativos</p>
+          <div style={{ display:'flex', gap:20 }}>
+            <Link to="/aviso-legal" style={{ color:'rgba(255,255,255,.3)', textDecoration:'none', fontSize:12 }}>Aviso Legal</Link>
+            <Link to="/privacidad" style={{ color:'rgba(255,255,255,.3)', textDecoration:'none', fontSize:12 }}>Política de Privacidad</Link>
+          </div>
         </div>
       </footer>
+
     </div>
   )
 }
